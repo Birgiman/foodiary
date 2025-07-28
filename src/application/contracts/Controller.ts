@@ -1,9 +1,26 @@
+import { getSchema } from '../../kernel/decorators/Schema';
 
-export interface IController<TBody = undefined> {
-  handle(params: IController.Request): Promise<IController.Response<TBody>>;
+export abstract class Controller<TBody = undefined> {
+  protected abstract handle(request: Controller.Request): Promise<Controller.Response<TBody>>;
+
+  public execute(request: Controller.Request): Promise<Controller.Response<TBody>> {
+      //valida o schema do ZOD
+      const body = this.validateBody(request.body);
+
+      return this.handle({ ...request, body });
+  };
+
+  private validateBody(body: Controller.Request['body']) {
+    const schema = getSchema(this);
+
+    if (!schema) {
+        return body
+      }
+    return schema.parse(body)
+  }
 }
 
-export namespace IController {
+export namespace Controller {
   export type Request<
   TBody = Record<string, unknown>,
   TParams = Record<string, unknown>,
